@@ -1,0 +1,1251 @@
+---
+title: "Analyses: CORTEX-D-19-00912"
+subtitle: "<h2><u>Cortex Ecological Risk RegReport</u></h2>"
+author: "<h3>Demidenko, Ip, Kelly,  Goetschius, Constante, Keating</h3>"
+date: "`r format(Sys.time(), '%B %Y')`"
+tags: [Cortex, ABCD, Risk, Parenting, Amygdala] 
+output:
+  html_document:
+    theme: spacelab
+    highlight: tango
+    toc: true
+    number_sections: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    code_folding: show
+    self_contained: yes
+---
+Install all **packages required to run** below code, if not already installed.
+```{r message=FALSE, warning=FALSE}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(janitor, cowplot, dplyr, readr, devtools, table1, MatchIt, descr, car, kableExtra, corrplot, multiplex, MplusAutomation)
+```
+
+Function from `Mike Angstat` to combined .txt data files from downloaded pre-packaged data.
+https://github.com/mangstad/Misc_utils/blob/master/abcd_functions.R
+```{r eval=FALSE, include=FALSE}
+read.abcd = function(file, sep="\t",skip=1,cols=NULL,descriptions=FALSE) {
+  headers = names(read.table(file,sep=sep,header=T,stringsAsFactors=F)[-1,])
+  if (descriptions) {
+    descrip = names(read.table(file,sep=sep,header=T,stringsAsFactors=F,skip=1))
+  }
+  data = read.table(file,sep=sep,header=T,stringsAsFactors=F,skip=skip)
+  names(data) = headers
+  if (!is.null(cols)) {
+    data = subset(data,select=cols)
+  }
+  if (descriptions) {
+    list(data=data,descrip=descrip)
+  } else {
+    data
+  }
+}
+
+multi.merge = function(...,by=NULL) {
+  Reduce(function(x,y) merge(x,y, all=TRUE,by=by), list(...))
+}
+
+```
+
+
+Combining .txt files from pre-packaged data. Based on data dictionary info at:
+https://nda.nih.gov/data_dictionary.html?source=ABCD%2BRelease%2B3.0&submission=ALL
+```{r eval=FALSE, include=FALSE}
+library(tidyverse)
+mypath = "~/Desktop/UM/4_ABCD/3_Projects/Cortex_sub/Stage2/data/ABCDStudyNDA_1182451/abcd/1_Cortex_variables/"
+setwd(mypath)
+
+#merging by
+mergecols = c("subjectkey","eventname")
+
+# select internalizing
+cbcl = read.abcd("ABCDStudyNDA_1182451/abcd_cbcls01.txt") %>% 
+  select(subjectkey,eventname,cbcl_scr_syn_internal_t)
+
+# select income
+income_base = read.abcd("ABCDStudyNDA_1182451/pdem02.txt") %>% 
+  select(subjectkey,eventname,demo_comb_income_v2)
+
+income_yr1 = read.abcd("ABCDStudyNDA_1182451/abcd/1_Cortex_variables/abcd_lpds01.txt") %>%
+  select(subjectkey,eventname,demo_comb_income_v2_l)
+
+
+# select MRI manufact
+mri = read.abcd("ABCDStudyNDA_1182451/abcd_mri01.txt")%>%
+  select(subjectkey,eventname,mri_info_manufacturer)
+
+# select MRI nback perform
+n_back_perf = read.abcd("ABCDStudyNDA_1182451/abcd_mrinback02.txt") %>%
+  select(subjectkey,eventname,
+         tfmri_nback_beh_performflag, # 2back & all back corr >= .60
+         tfmri_nb_all_beh_ctotal_mrt, # mean response times for all corr responses
+         tfmri_nb_all_beh_ctotal_stdrt) # std of reaction time for all corr responses
+
+# select Par Safe Q
+par_safe = read.abcd("ABCDStudyNDA_1182451/abcd_pnsc01.txt") %>%
+  select(subjectkey,eventname,
+         neighborhood1r_p, 
+         neighborhood2r_p, 
+         neighborhood3r_p) 
+
+
+# select ADI
+redhist = read.abcd("ABCDStudyNDA_1182451/abcd_rhds01.txt") %>%
+  select(subjectkey,eventname,
+         reshist_addr1_adi_wsum)
+
+# select puberty
+pubert = read.abcd("ABCDStudyNDA_1182451/abcd_ssphp01.txt") %>%
+  select(subjectkey,eventname,
+         pds_p_ss_female_category_2,
+         pds_p_ss_male_category_2)
+
+# select caregiver acceptance
+accept1 = read.abcd("ABCDStudyNDA_1182451/crpbi01.txt") %>%
+  select(subjectkey,eventname,
+         crpbi_studycaregiver_id) # who caregiver is
+accept2 = read.abcd("ABCDStudyNDA_1182451/abcd_sscey01.txt") %>%
+  select(subjectkey,eventname,
+         crpbi_acceptance_ss_studycaregiver = crpbi_y_ss_parent)
+# select caregiver nback
+nback = read.abcd("ABCDStudyNDA_1182451/nback_bwroi02.txt") %>%
+  select(subjectkey,eventname,
+         tfmri_nback_all_face.vs.place_beta_subcort.aseg_amygdala.lh = tfmri_nback_all_164,
+         tfmri_nback_all_face.vs.place_beta_subcort.aseg_amygdala.rh = tfmri_nback_all_178, 
+         tfmri_nback_all_beta_mm)# Average framewise displacement in mm
+
+# rel_fam & race
+demograph = read.abcd("ABCDStudyNDA_1182451/acspsw03.txt") %>%
+  select(subjectkey,eventname,
+         interview_age,
+         sex,# M = Male; F = Female; O=Other; NR = Not reported
+         race_ethnicity, #1 = White; 2 = Black; 3 = Hispanic; 4 = Asian; 5 = Other
+         rel_family_id
+         )
+
+# site id
+site = read.abcd("ABCDStudyNDA_1182451/abcd_lt01.txt") %>% 
+  select(subjectkey,eventname,
+         interview_age,
+         abcd_site = site_id_l)
+
+# site id
+fscq = read.abcd("ABCDStudyNDA_1182451/freesqc01.txt") %>% 
+  select(subjectkey,eventname,
+         fsqc_qc)
+
+
+# Merge all above by site/id
+abcd = multi.merge(demograph,site,income_base, income_yr1,cbcl,
+                   mri, n_back_perf, par_safe, fscq,
+                   redhist, pubert,accept1,accept2,nback, by=mergecols)
+
+abcd = abcd %>% 
+  filter(eventname == "baseline_year_1_arm_1" | eventname == "1_year_follow_up_y_arm_1") %>% 
+  mutate(event_name = if_else(eventname == "baseline_year_1_arm_1", "Baseline", "Year 1"))
+
+
+# write file
+#write.csv(abcd, "data_release3_2020_11_04.csv")
+
+```
+
+
+
+
+
+# **Load**
+
+## Loading .csv data
+Start here to reduce time in loading large .rds file
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+# selected data version 2.0.01 when .rds file was used
+#abcd = read_csv("~/Desktop/UM/4_ABCD/3_Projects/Cortex_sub/Stage2/data/cortex_data_release2_2020_10_15.csv") %>% select(-X1)
+
+# load data that wsa written above
+abcd = read_csv("data_release3_2020_11_04.csv") %>% select(-X1)
+#abcd = read_csv("~/Desktop/UM/4_ABCD/3_Projects/Cortex_sub/Stage2/data/data_release3_2020_11_04.csv") %>% select(-X1)
+
+abcd = abcd %>%
+  rename(subj_id = subjectkey,
+         interview_age = interview_age.x,
+         MRI_QC_general = fsqc_qc, # free surfer QC Accept/Reject
+         nback_meanFD_motion = tfmri_nback_all_beta_mm, #nback Mean framewise displacement in mm
+         Nback_beh_60 = tfmri_nback_beh_performflag, # participant acceptable performance task; *corr.2.back_rate >= 0.6 & *beh_corr.0.back_rate >= 0.6
+         Right_amyg_nback = tfmri_nback_all_face.vs.place_beta_subcort.aseg_amygdala.rh,
+         Left_amyg_nback = tfmri_nback_all_face.vs.place_beta_subcort.aseg_amygdala.lh,
+         ethnicity = race_ethnicity,
+         neighb_phenx_1r_p = neighborhood1r_p,
+         neighb_phenx_2r_p = neighborhood2r_p,
+         neighb_phenx_3r_p = neighborhood3r_p, 
+         tfmri_nback_all_face.vs.place_beta_subcort.aseg_amygdala.lh,
+         tfmri_nback_all_face.vs.place_beta_subcort.aseg_amygdala.rh,          
+         pubertdev_ss_male_category_p = pds_p_ss_male_category_2 , 
+         pubertdev_ss_female_category_p = pds_p_ss_female_category_2) %>% 
+  select(-c(interview_age.y, eventname))
+```
+
+
+# **Data clean** 
+using similar methods as in:
+
+## Updating factor variables 
+```{r message=FALSE, warning=FALSE}
+
+abcd$income_base_f = factor(abcd$demo_comb_income_v2, 
+                            levels = c(1,2,3,4,5,6,7,8,9,10,777,999),
+                            labels = c('Less than $5,000',
+                                       '$5,000 through $11,999',
+                                       '$12,000 through $15,999',
+                                       '$16,000 through $24,999',
+                                       '$25,000 through $34,999',
+                                       '$35,000 through $49,999',
+                                       '$50,000 through $74,999',
+                                       '$75,000 through $99,999',
+                                       '$100,000 through $199,999',
+                                       '$200,000 and greater', 
+                                       'Refuse to answer',
+                                       "Don't Know"))
+
+abcd$income_yr1_f = factor(abcd$demo_comb_income_v2_l, 
+                            levels = c(1,2,3,4,5,6,7,8,9,10,777,999),
+                            labels = c('Less than $5,000',
+                                       '$5,000 through $11,999',
+                                       '$12,000 through $15,999',
+                                       '$16,000 through $24,999',
+                                       '$25,000 through $34,999',
+                                       '$35,000 through $49,999',
+                                       '$50,000 through $74,999',
+                                       '$75,000 through $99,999',
+                                       '$100,000 through $199,999',
+                                       '$200,000 and greater',
+                                       'Refuse to answer',
+                                       "Don't Know"))
+
+# recoding factor income to numeric BASELINE
+abcd = abcd %>% 
+  mutate(income_base_r = case_when(income_base_f == 'Less than $5,000' ~ 1,
+                            income_base_f == '$5,000 through $11,999' ~ 2,
+                            income_base_f == '$12,000 through $15,999' ~ 3,
+                            income_base_f == '$16,000 through $24,999' ~ 4,
+                            income_base_f == '$25,000 through $34,999' ~ 5,
+                            income_base_f == '$35,000 through $49,999' ~ 6,
+                            income_base_f == '$50,000 through $74,999' ~ 7,
+                            income_base_f == '$75,000 through $99,999' ~ 8,
+                            income_base_f == '$100,000 through $199,999' ~ 9,
+                            income_base_f == '$200,000 and greater' ~ 10,
+                            TRUE ~ NA_real_))
+
+abcd %>% 
+  distinct(abcd_site)
+abcd = abcd %>% 
+  mutate(site = case_when(abcd_site == 'site01' ~ 1,
+                          abcd_site == 'site02' ~ 2,
+                          abcd_site == 'site03' ~ 3,
+                          abcd_site == 'site04' ~ 4,
+                          abcd_site == 'site05' ~ 5,
+                          abcd_site == 'site06' ~ 6,
+                          abcd_site == 'site07' ~ 7,
+                          abcd_site == 'site08' ~ 8,
+                          abcd_site == 'site09' ~ 9,
+                          abcd_site == 'site10' ~ 10,
+                          abcd_site == 'site11' ~ 11,
+                          abcd_site == 'site12' ~ 12,
+                          abcd_site == 'site13' ~ 13,
+                          abcd_site == 'site14' ~ 14,
+                          abcd_site == 'site15' ~ 15,
+                          abcd_site == 'site16' ~ 16,
+                          abcd_site == 'site17' ~ 17,
+                          abcd_site == 'site18' ~ 18,
+                          abcd_site == 'site19' ~ 19,
+                          abcd_site == 'site20' ~ 20,
+                          abcd_site == 'site21' ~ 21,
+                          abcd_site == 'site22' ~ 22,
+                          TRUE ~ NA_real_))
+
+
+abcd %>% 
+  distinct(mri_info_manufacturer)
+abcd = abcd %>% 
+  mutate(scanner_type = case_when(mri_info_manufacturer == 'SIEMENS' ~ 1,
+                                  mri_info_manufacturer == 'GE MEDICAL SYSTEMS' ~ 2,
+                                  mri_info_manufacturer == 'Philips Medical Systems' ~ 3,
+                                  TRUE ~ NA_real_))
+                                  
+
+# coding sex variable from factor to numeric
+abcd = abcd %>% 
+  mutate(sex_r = case_when(sex == 'M' ~ 1,
+                            sex == 'F' ~ 0))
+
+# race
+abcd$race5 = factor(abcd$ethnicity, 
+                            levels = c(1,2,3,4,5),
+                            labels = c("White", "Black", "Hispanic", "Asian", "Other"))
+
+
+# self-report measure of PUBERTAL STATUS  [1] prepuberty ; [2] - early puberty ; [3]-mid puberty; [4] - late puberty; [5] - post puberty
+abcd = abcd %>% 
+  mutate(puberty = case_when(sex == 'F' ~ pubertdev_ss_female_category_p,
+                             sex == 'M' ~ pubertdev_ss_male_category_p))
+
+# Create parent self-report avg, which is 1+2+3/3
+abcd = abcd %>% 
+  mutate(neighb_phenx_ss_mean_p = (neighb_phenx_1r_p + neighb_phenx_2r_p + neighb_phenx_3r_p)/3)
+
+
+# Create average of Bilateral amyg activation
+abcd = abcd %>% 
+  mutate(Bilat_Amyg = ((Right_amyg_nback + Left_amyg_nback) /2))
+```
+
+## Conducting QC checks
+
+```{r}
+# reduce YR1 subject N to match those in BASELINE
+# creating variable to match N in BL to YR1
+subj_BL_ids <- abcd %>% 
+  filter(event_name == "Baseline") %>% 
+  distinct(subj_id)
+
+library(janitor) # to get_dupes() in BASELINE
+subj_BL_dupl <- abcd %>% 
+  filter(event_name == "Baseline") %>% 
+  get_dupes(subj_id)
+
+# Based on redudant baseline in subj_BL_dupl, remove rows
+abcd <- abcd[-c(2217,#NDAR_INV2ZA2LC3N
+                2564,#NDAR_INV3E0WVH3G
+                13237,#NDAR_INVJ9GNXGK5
+                20607,#NDAR_INVWE1DE80Z
+                21516),]#NDAR_INVXN6HMGK8
+
+# confirm no more duplicates
+subj_BL_dupl_test <- abcd %>% 
+  filter(event_name == "Baseline") %>% 
+  get_dupes(subj_id)
+
+```
+
+## Creating exclusion variable
+Criteria include: 
+
+- MRI_QC = `Reject/NA`
+- N-back meanFD is `> .9 / NA`
+- N-back accuracy `<60% / NA`
+- Right amygdala activation during N-back is `NA`
+```{r message=FALSE, warning=FALSE}
+# excluding subjects (1 = EXCLUDE; 0 = INCLUDE)
+abcd = abcd %>% 
+  mutate(exclude = case_when(event_name == "Year 1" ~ 0,
+                             MRI_QC_general == 0 ~ 1,
+                             MRI_QC_general = is.na(MRI_QC_general) ~ 1,
+                             nback_meanFD_motion > .9 ~ 1,
+                             nback_meanFD_motion = is.na(nback_meanFD_motion) ~ 1,
+                             Nback_beh_60 == 0 ~ 1,
+                             Nback_beh_60 = is.na(Nback_beh_60) ~ 1,
+                             Right_amyg_nback = is.na(Right_amyg_nback) ~ 1,
+                             TRUE ~ 0))
+
+
+
+```
+
+## Evaluating N excluded
+- Excluding based on QC metrics above. 
+- Used in inclusion/exclusion flowchart in `Figure ##`
+
+```{r message=FALSE, warning=FALSE}
+
+abcd %>% 
+  group_by(event_name) %>% 
+  summarize(total_n = n())
+
+
+# General inform/quality/time checks
+abcd %>%
+  filter(event_name == "Baseline") %>% 
+  group_by(MRI_QC_general) %>% 
+  summarise('Scan QC General'=n())
+    
+abcd %>%
+  filter(event_name == "Baseline") %>% 
+  filter(nback_meanFD_motion > .9) %>% # consider cut-off?
+  summarise('Framewise Displacement Exceed FD .90'=n())
+
+abcd %>%
+  filter(event_name == "Baseline") %>% 
+  group_by(Nback_beh_60) %>% 
+  summarise('N-Back Beh below/above 60%'=n())
+
+
+# Checking flow of participants based on exclusion values for Flowchart exclusion(s)
+
+# STEP 2 NBACK MOTION
+abcd %>% 
+  filter(event_name == "Baseline") %>% 
+  filter(MRI_QC_general == 1) %>% 
+  filter(is.na(nback_meanFD_motion)) %>% 
+  summarise(Missing_FD = n())
+
+abcd %>% 
+  filter(event_name == "Baseline") %>% 
+  filter(MRI_QC_general == 1) %>% 
+  filter(nback_meanFD_motion > .90) %>% # cutoff
+  summarise(exclude_FD = n())
+
+abcd %>% 
+  filter(event_name == "Baseline") %>% 
+  filter(MRI_QC_general == 1) %>% 
+  filter(nback_meanFD_motion < .90) %>% # cutoff
+  summarise(incude_n = n())
+
+# STEP 3 NBACK BEHAVIOR
+abcd %>% 
+  filter(event_name == "Baseline") %>% 
+  filter(MRI_QC_general == 1) %>% 
+  filter(nback_meanFD_motion < .90) %>% # cutoff mean FD
+  group_by(Nback_beh_60) %>% 
+  summarise(Nback_Beh = n())
+
+# STEP 4 - nback amyg
+abcd %>% 
+  filter(event_name == "Baseline") %>% 
+  filter(MRI_QC_general == 1) %>% 
+  filter(nback_meanFD_motion < .90) %>% # cutoff mean FD
+  filter(Nback_beh_60 == 1) %>% 
+  filter(is.na(Right_amyg_nback)) %>% 
+  summarise(amyg_NA = n())
+
+abcd %>% 
+  filter(event_name == "Baseline") %>% 
+  filter(MRI_QC_general == 1) %>% 
+  filter(nback_meanFD_motion < .90) %>% # cutoff mean FD
+  filter(Nback_beh_60 == 1) %>% 
+  filter(!is.na(Right_amyg_nback)) %>% 
+  summarise(count = n())
+
+# Final - total included based on criteria
+abcd %>% 
+  filter(event_name == "Baseline", exclude == 0) %>% # final N based in brain QC
+  summarise("N_postBrain_QC" = n())
+  
+
+```
+
+# Subset data
+Subseting data based on inclusion variables created above `exclude = 0`
+
+```{r message=FALSE, warning=FALSE}
+
+abcd %>% 
+  group_by(event_name) %>% 
+  summarise(n = n())
+
+abcd_incl = abcd %>% 
+  filter(exclude == 0)
+
+
+abcd_incl %>% 
+  group_by(event_name) %>% 
+  summarise(Event_N = n())
+
+```
+
+# subset YR 1 data to match (7385) baseline IDs
+```{r message=FALSE, warning=FALSE}
+# reduce YR1 subject N to match those in BASELINE
+# creating variable to match N in BL to YR1
+includ_BL_ids <- abcd_incl %>% 
+  filter(event_name == "Baseline") %>% 
+  distinct(subj_id)
+
+
+#subset by IDs that were in baseline, for BL and YR1 = 7385 x 2 = 
+abcd_incl <- subset(abcd_incl, subj_id %in% includ_BL_ids$subj_id)
+```
+
+
+
+
+# Vis data/var
+
+## Enr Risk Var
+### Parental SR neighborhood safety
+mean of parent report - neighb_phenx_1r_p + neighb_phenx_2r_p + neighb_phenx_3r_p)/3 - (1-5; 5 = strongly agree) 
+
+  - Q1 I feel safe walking in my neighborhood, day or night; neighb_phenx_1r_p
+  - Q2 Violence is not a problem in my neighborhood; neighb_phenx_2r_p
+  - Q3 My neighborhood is safe from crime.] neighb_phenx_3r_p
+
+```{r message=FALSE, warning=FALSE}
+abcd_incl %>% 
+  select(neighb_phenx_ss_mean_p) %>% 
+  ggplot(aes(x = neighb_phenx_ss_mean_p)) +
+  geom_histogram(bins = 12, fill = "white", colour = "black") + 
+  xlab("Mean Neighborhood Safety") + 
+  ylab("Total (n)")+
+  theme_minimal()
+```
+
+### Parental income, 
+TOTAL COMBINED FAMILY INCOME for the past 12 months
+
+```{r message=FALSE, warning=FALSE}
+abcd_incl %>% 
+  filter(event_name=="Year 1") %>% 
+  select(income_yr1_f) %>% 
+  filter(!is.na(income_yr1_f)) %>% 
+  group_by(income_yr1_f) %>% 
+  summarise(Total = n()) %>% 
+  mutate('Proportion %' = Total/sum(Total)*100)
+
+abcd_incl %>%
+  filter(event_name=="Year 1") %>%
+  select(income_base_f) %>%
+  filter(!is.na(income_base_f)) %>% 
+  group_by(income_base_f) %>% 
+  summarise(Total = n()) %>% 
+  mutate('Proportion %' = Total/sum(Total)*100)
+
+abcd_incl %>% 
+  filter(event_name == "Baseline", demo_comb_income_v2 != 777, demo_comb_income_v2 != 999) %>% 
+  select(demo_comb_income_v2) %>% 
+  ggplot(aes(x = demo_comb_income_v2)) + 
+  geom_histogram(stat = "count", fill = "white", colour = "black") + 
+  xlab("Baseline Self-Reported Income") + 
+  ylab("Total (n)")+
+  theme_minimal()
+```
+
+### Area Deprivation Index (ADI)
+Residential History Derived Scores; weighted sum score used to create the percentile rankings described in the pre-reg report (Kind & Buckingham, 2018; doi: 10.1056/NEJMp1802313). Percentile ranking is used to provide a visualization of the weighted sum score in the Neighborhood Altas map. clarify (to reviewers) using the weighted sum score provided in DEAP, not the percentile rankings (not available in DEAP) that are used to visualize the ADI weighted sum score. 
+
+The `Area Deprivation Index` is composed of 17 education, employment, housing-quality, and poverty measures original drawn from census data and updated with recent American Community Survey data. (Kind & Buckingham, 2018). Thus, includes similar limitations as ACS/Census data (limited account of undocumented-immigrant populations).
+
+  - cross reference of over 69 million nine-digit Zip Codes 
+  - provides the distribution neighborhood disadvantage throughout us. See map at: (http://www.neighborhoodatlas.medicine.wisc.edu.proxy.lib.umich.edu/)
+
+```{r message=FALSE, warning=FALSE}
+abcd_incl %>% 
+  select(reshist_addr1_adi_wsum) %>% 
+  ggplot(aes(x = reshist_addr1_adi_wsum)) + 
+  geom_histogram(bins = 15, fill = "white", colour = "black") + 
+  xlab("Baseline Area Deprivation Index") + 
+  ylab("Total (n)")+
+  theme_minimal()
+
+abcd_incl %>% 
+  select(reshist_addr1_adi_wsum) %>% 
+  summarise(Min_of_sample = min(reshist_addr1_adi_wsum, na.rm = T), Max_of_sample = max(reshist_addr1_adi_wsum, na.rm = T))
+```
+
+
+## Moderator 
+### Parental acceptance
+
+CRPBI - Acceptance Subscale Mean of Report by Parent Completing Protocol by youth: (crpbi_parent1_y + crpbi_parent2_y + crpbi_parent3_y], crpbi_parent4_y + crpbi_parent5_y)/5; Validation: Minimum of 4 items answered; 
+[1-not like him/her to 3-a lot like him/her]; 
+
+  - Q1  crpbi_acceptance_studycaregiver1 - Makes me feel better after talking over my worries with him/her; 
+  - Q2  crpbi_acceptance_studycaregiver2 - Smiles at me very often; 
+  - Q3  crpbi_acceptance_studycaregiver3 - Is able to make me feel better when I am upset. 
+  - Q4  crpbi_acceptance_studycaregiver4 - Believes in showing his/her love for me.
+  - Q5  crpbi_acceptance_studycaregiver5 - Is easy to talk to.
+```{r message=FALSE, warning=FALSE}
+abcd_incl %>% 
+  filter(event_name == "Baseline") %>% 
+  select(crpbi_acceptance_ss_studycaregiver) %>% 
+  ggplot(aes(x = crpbi_acceptance_ss_studycaregiver)) + 
+  geom_histogram(bins = 12, fill = "white", colour = "black") + 
+  xlab("Baseline CRPBI Parental Acceptance") + 
+  ylab("Total (n)")+
+  theme_minimal()
+```
+
+## Amyg Activation
+
+### Faces versus placed ROI mean beta
+
+Left & Right Amygdala activation
+
+```{r message=FALSE, warning=FALSE}
+#######
+#   Rainclouds
+######
+library(cowplot)
+library(dplyr)
+library(readr)
+library(devtools)
+source("https://raw.githubusercontent.com/RainCloudPlots/RainCloudPlots/master/tutorial_R/R_rainclouds.R")
+
+abcd_brain = abcd_incl %>% filter(event_name=='Baseline')
+
+
+
+
+abcd_brain %>% 
+  select(Left_amyg_nback, Right_amyg_nback, Bilat_Amyg) %>%
+  gather(key = "Region", 
+         value = "Beta",
+         Left_amyg_nback:Bilat_Amyg) %>% 
+  group_by(Region) %>% 
+  summarise(Mean = mean(Beta)) %>% 
+  ggplot(aes(x = Region, y = Mean, fill =factor(Region))) +
+  geom_bar(stat="identity", position = "dodge") +
+  ggtitle("Mean Signal Intensity by Region Type: During Nback Faces v. Places") +
+  theme_minimal()
+  
+
+abcd_brain %>% 
+  select(Left_amyg_nback, Right_amyg_nback, Bilat_Amyg) %>%
+  gather(key = "Region", 
+         value = "Beta",
+         Left_amyg_nback:Bilat_Amyg) %>% 
+  ggplot(aes(x=Region, y = Beta, fill = Region, colour = Region))+
+  geom_flat_violin(position = position_nudge(x = .25, y = 0),adjust =1, trim = FALSE)+ # x - adjusts position of boxplot in relation to distribution. Y displaces distribution, adjust value  modifies distribution type (smoothing kernel)
+  geom_point(position = position_jitter(width = .1), size = .1)+ # widtih changes height of points distribution, size changes point size
+  #geom_boxplot(aes(x = as.numeric(event_name)+0.25, y = cbcl_scr_syn_internal_t),outlier.shape = NA, alpha = 0.3, width = .1, colour = "BLACK") + # .25 CHANGES POSITIONS OF BOXPLOT
+  ylab('Mean Beta Coefficients') +
+  xlab('') +
+  coord_flip() + # flips axis
+  theme_cowplot() + 
+  guides(fill = FALSE, colour = FALSE) +
+  scale_colour_brewer(palette = "Set2") +
+  scale_fill_brewer(palette = "Set2") +
+  ggtitle("Distribution of Mean Beta Estimates for Subjects") +
+  theme_minimal()
+
+```
+
+## Outcome 
+
+### INTERNALIZING SCORE 
+
+ABCD Parent Child Behavior Checklist Scores Aseba (CBCL)
+
+```{r message=FALSE, warning=FALSE}
+abcd_incl  %>% 
+  filter(event_name=='Baseline') %>% 
+  select(cbcl_scr_syn_internal_t) %>% 
+  summarise("Responders CBCL Baseline" = n(), Mean = mean(cbcl_scr_syn_internal_t, na.rm = T), SD = sd(cbcl_scr_syn_internal_t, na.rm = T))
+
+abcd_incl  %>% 
+  filter(event_name=='Year 1') %>% 
+  select(cbcl_scr_syn_internal_t) %>% 
+  summarise("Responders CBCL Year 1" = n(), Mean = mean(cbcl_scr_syn_internal_t, na.rm = T), SD = sd(cbcl_scr_syn_internal_t, na.rm = T))
+
+abcd_incl  %>% 
+  select(cbcl_scr_syn_internal_t, event_name) %>% 
+  ggplot(aes (x= cbcl_scr_syn_internal_t)) +
+  geom_histogram(binwidth = 5, fill = "white", colour = "black") + 
+  xlab("CBCL Internalize (t)") + 
+  ylab("Total (n)")+
+  facet_wrap(~event_name)+
+  theme_minimal()
+
+### rain clouds
+abcd_sample = abcd_incl %>% filter(event_name=='Baseline' | event_name=='Year 1')
+
+abcd_sample %>% 
+  ggplot(aes(x=event_name, y = cbcl_scr_syn_internal_t, fill = event_name, colour = event_name))+
+  geom_flat_violin(position = position_nudge(x = .25, y = 0),adjust =1, trim = FALSE)+ # x - adjusts position of boxplot in relation to distribution. Y displaces distribution, adjust value  modifies distribution type (smoothing kernel)
+  geom_point(position = position_jitter(width = .1), size = .1)+ # widtih changes height of points distribution, size changes point size
+  #geom_boxplot(aes(x = as.numeric(event_name)+0.25, y = cbcl_scr_syn_internal_t),outlier.shape = NA, alpha = 0.3, width = .1, colour = "BLACK") + # .25 CHANGES POSITIONS OF BOXPLOT
+  ylab('CBCL Internalizing') +
+  xlab('Wave') +
+  coord_flip() + # flips axis
+  theme_cowplot() + 
+  guides(fill = FALSE, colour = FALSE) +
+  scale_colour_brewer(palette = "Set2") +
+  scale_fill_brewer(palette = "Set2") +
+  ggtitle("") +
+  theme_minimal()
+
+
+abcd_sample %>% 
+  ggplot(aes(x=sex, y = cbcl_scr_syn_internal_t, fill = sex, colour = sex))+
+  geom_flat_violin(position = position_nudge(x = .25, y = 0),adjust =1, trim = FALSE)+ # x - adjusts position of boxplot in relation to distribution. Y displaces distribution, adjust value  modifies distribution type (smoothing kernel)
+  geom_point(position = position_jitter(width = .1), size = .1)+ 
+  ylab('CBCL Internalizing') +
+  xlab('Sex') +
+  coord_flip() + # flips axis
+  theme_cowplot() + 
+  guides(fill = FALSE, colour = FALSE) +
+  scale_colour_brewer(palette = "Set2") +
+  scale_fill_brewer(palette = "Set2") +
+  ggtitle("") +
+  theme_minimal()
+
+```
+
+## Covariates
+
+### Puberty
+
+```{r message=FALSE, warning=FALSE}
+abcd_sample %>% 
+  filter(!is.na(sex), event_name == "Baseline") %>% 
+  mutate(Sex_r = if_else(sex == "F", "Female", "Male")) %>% 
+  ggplot(aes(x=Sex_r, y = puberty, fill = Sex_r, colour = Sex_r))+
+  geom_flat_violin(position = position_nudge(x = .25, y = 0),adjust =1, trim = FALSE)+ # x - adjusts position of boxplot in relation to distribution. Y displaces distribution, adjust value  modifies distribution type (smoothing kernel)
+  geom_point(position = position_jitter(width = .1), size = .1)+ # widtih changes height of points distribution, size changes point size
+  ylab('Pubertal Development') +
+  xlab('Sex') +
+  coord_flip() + # flips axis
+  theme_cowplot() + 
+  guides(fill = FALSE, colour = FALSE) +
+  scale_colour_brewer(palette = "Set2") +
+  scale_fill_brewer(palette = "Set2") +
+  ggtitle("") +
+  theme_minimal()
+
+
+abcd_sample %>% 
+  filter(!is.na(sex), event_name == "Baseline") %>% 
+  mutate(Sex_r = if_else(sex == "F", "Female", "Male")) %>% 
+  group_by(Sex_r) %>% 
+  summarise(Mean = mean(puberty, na.rm = T), SD = sd(puberty, na.rm = T), Subjs = n())
+
+```
+
+### Scanner Manufacturer
+
+```{r message=FALSE, warning=FALSE}
+abcd_incl %>% 
+  filter(event_name == "Baseline") %>% 
+  select(mri_info_manufacturer) %>% 
+  group_by(mri_info_manufacturer) %>% 
+  summarize(count = n())
+
+abcd_incl %>% 
+  filter(event_name == "Baseline") %>% 
+  select(mri_info_manufacturer) %>% 
+  group_by(mri_info_manufacturer) %>% 
+  summarize(Scanner = n()) %>% 
+  ggplot(aes(x = mri_info_manufacturer, y = Scanner, fill =as.factor(mri_info_manufacturer))) +
+  geom_bar(stat="identity", position = "dodge") +
+  ggtitle("Scanner Types") +
+  geom_text(aes(label=Scanner), position=position_dodge(width=0.9), vjust=-0.25)+
+  scale_fill_discrete(name="Scanner Type",
+                      breaks=c(1:3),
+                      labels=c(1:3))+
+  theme(axis.text.x=element_text(size=11, angle=30, vjust=.8, hjust=0.8))+
+  theme_minimal()
+```
+
+
+### ABCD Site
+
+```{r message=FALSE, warning=FALSE}
+abcd_incl %>% 
+  filter(event_name == "Baseline") %>% 
+  select(abcd_site) %>% 
+  group_by(abcd_site) %>% 
+  summarize(count = n()) %>% 
+  arrange(count)
+
+abcd_incl %>% 
+  filter(event_name == "Baseline") %>% 
+  select(site) %>% 
+  group_by(site) %>% 
+  summarize(count = n()) %>% 
+  ggplot(aes(x = site, y = count, fill =as.factor(site))) +
+  geom_bar(stat="identity", position = "dodge") +
+  ggtitle("Total Subjects Per Site") +
+  geom_text(aes(label=count), position=position_dodge(width=0.9), vjust=-0.25)+
+  scale_fill_discrete(name="ABCD Site",
+                      breaks=c(1:22),
+                      labels=c(1:22))+
+  theme(axis.text.x=element_text(size=11, angle=30, vjust=.8, hjust=0.8))+
+  theme_minimal()
+
+abcd %>% 
+  filter(event_name == "Baseline") %>% 
+  select(site,  exclude) %>% 
+  group_by(exclude, site) %>% 
+  summarize(count = n()) %>% 
+  summarize(count_prop = count/sum(count), count, site) %>% 
+  ggplot(aes(x = site, y = count_prop, fill =as.factor(site))) +
+  geom_bar(stat="identity", position = "dodge") +
+  xlab("ABCD Site") +
+  ylab("% included/excluded") +
+  ggtitle("Total Subjects Per Site Include/Excluded") +
+  facet_wrap(~exclude) +
+  geom_text(aes(label=site), position=position_dodge(width=0.9), vjust=-0.25)+
+  scale_fill_discrete(name="ABCD Site",
+                      breaks=c(1:22),
+                      labels=c(1:22))+
+  theme(axis.text.x=element_text(size=11, angle=30, vjust=.8, hjust=0.8))+
+  theme_minimal()
+
+abcd %>% 
+  filter(event_name == "Baseline") %>% 
+  select(scanner_type,  exclude) %>% 
+  group_by(exclude, scanner_type) %>% 
+  summarize(count = n()) %>% 
+  summarize(count_prop = count/sum(count), count, scanner_type) %>% 
+  ggplot(aes(x = scanner_type, y = count_prop, fill =as.factor(scanner_type))) +
+  geom_bar(stat="identity", position = "dodge") +
+  xlab("ABCD canner") +
+  ylab("% included/excluded") +
+  ggtitle("Total Subjects Scanner Type Include/Excluded") +
+  facet_wrap(~exclude) +
+  geom_text(aes(label=scanner_type), position=position_dodge(width=0.9), vjust=-0.25)+
+  scale_fill_discrete(name="ABCD Site",
+                      breaks=c(1:22),
+                      labels=c(1:22))+
+  theme(axis.text.x=element_text(size=11, angle=30, vjust=.8, hjust=0.8))+
+  theme_minimal()
+
+
+```
+
+### Age (months) at baseline
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+abcd_incl %>% 
+  filter(event_name == "Baseline") %>% 
+  select(interview_age) %>% 
+  group_by(interview_age) %>% 
+  summarise(Count = n())
+  #summarize(mean_age = mean(interview_age), sd_age = sd(interview_age), count = n())
+
+abcd_sample %>% 
+  ggplot(aes(x=event_name, y = interview_age, fill = event_name, colour = event_name))+
+  geom_flat_violin(position = position_nudge(x = .25, y = 0),adjust =1, trim = FALSE)+ # x - adjusts position of boxplot in relation to distribution. Y displaces distribution, adjust value  modifies distribution type (smoothing kernel)
+  geom_point(position = position_jitter(width = .1), size = .1)+ # widtih changes height of points distribution, size changes point size
+  ylab('Age (months)') +
+  xlab('Wave') +
+  coord_flip() + # flips axis
+  theme_cowplot() + 
+  guides(fill = FALSE, colour = FALSE) +
+  scale_colour_brewer(palette = "Set1") +
+  scale_fill_brewer(palette = "Set1") +
+  ggtitle("") +
+  theme_minimal()
+```
+
+### Sex 
+
+```{r message=FALSE, warning=FALSE}
+abcd_incl %>% 
+  filter(event_name == "Baseline") %>% 
+  select(sex, subj_id) %>% #subject ID;s
+   group_by(sex) %>% # sex at birth
+  distinct(subj_id) %>% 
+  summarise(count = n())
+
+
+abcd_incl %>% 
+  filter(event_name == "Baseline") %>% 
+  select(sex) %>% 
+  group_by(sex) %>% 
+  summarize(sex_t = n()) %>% 
+  ggplot(aes(x = sex, y = sex_t, fill =as.factor(sex_t))) +
+  geom_bar(stat="identity", position = "dodge") +
+  ggtitle("") +
+  ylab("Total") +
+  xlab("Sex") +
+  geom_text(aes(label=sex_t), position=position_dodge(width=0.9), vjust=-0.25)+
+  scale_fill_discrete(name="Sex",
+                      breaks=c(1:3),
+                      labels=c(1:3))+
+  theme(axis.text.x=element_text(size=11, angle=30, vjust=.8, hjust=0.8))+
+  theme_minimal()
+```
+
+### Race
+```{r message=FALSE, warning=FALSE}
+
+# 1: White | 2: Black | 3: Asian | 4: Other/Mixed
+abcd_incl %>% 
+  filter(event_name == "Baseline") %>% 
+  select(race5) %>% 
+         group_by(race5) %>% # 
+           summarise(count = n())
+
+
+abcd_incl %>% 
+  filter(event_name == "Baseline") %>% 
+  select(race5) %>% 
+  group_by(race5) %>% 
+  summarize(race = n()) %>% 
+  ggplot(aes(x = race5, y = race, fill =as.factor(race5))) +
+  geom_bar(stat="identity", position = "dodge") +
+  ggtitle("") +
+  ylab("Total") +
+  xlab("Race") +
+  geom_text(aes(label=race), position=position_dodge(width=0.9), vjust=-0.25)+
+  scale_fill_discrete(name="Race",
+                      breaks=c(1:3),
+                      labels=c(1:3))+
+  theme(axis.text.x=element_text(size=11, angle=30, vjust=.8, hjust=0.8))+
+  theme_minimal()
+
+```
+
+### Family relation
+
+rel_family_id: These values are derived from information contained in pairs of participant IDs that are marked as either sibling, twin, or triplet. The family ID is the same for all participants in a family and different between families. Inside a family each set of twins, triplets or siblings will have a unique group ID. A family with 2 sets of twins and one siblings will there have three unique group IDs. 
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+abcd %>% 
+  filter(event_name == "Baseline") %>% 
+  select(rel_family_id) %>% 
+  group_by(rel_family_id) %>% 
+  summarise(Count = n())
+
+# estimating SAME familes that collected AT DIFFERENT SITES
+abcd %>% 
+  filter(event_name == "Baseline") %>% 
+  select(rel_family_id, abcd_site) %>% 
+  group_by(abcd_site,rel_family_id) %>% 
+  summarise(Count = n()) %>% 
+  arrange(desc(rel_family_id)) %>% 
+  get_dupes(rel_family_id)
+```
+
+
+# Tables
+
+## Descriptives: Included/Excluded 
+
+```{r message=FALSE, warning=FALSE}
+# table creating using http://thatdatatho.com/2018/08/20/easily-create-descriptive-summary-statistic-tables-r-studio/
+library(table1)
+library(MatchIt)
+table1::label(abcd$interview_age) <- "Age (Months)"
+table1::label(abcd$sex) <- "Sex"
+table1::label(abcd$income_base_f) <- "Family Income"
+table1::label(abcd$race5) <- "Race"
+table1::label(abcd$puberty) <- "Puberty"
+table1::label(abcd$cbcl_scr_syn_internal_t) <- "Internalizing"
+table1::label(abcd$neighb_phenx_ss_mean_p) <- "Neighborhood Safety Mean"
+table1::label(abcd$reshist_addr1_adi_wsum) <- "ADI"
+table1::label(abcd$crpbi_acceptance_ss_studycaregiver) <- "Parental Acceptance"
+
+
+table1::table1(~interview_age + sex + income_base_f + race5 + puberty + cbcl_scr_syn_internal_t + neighb_phenx_ss_mean_p + reshist_addr1_adi_wsum + crpbi_acceptance_ss_studycaregiver | as.factor(exclude)*event_name, data = abcd)
+
+
+#Creating included/excluded subset data for decriptives
+
+library(table1)
+library(MatchIt)
+table1::label(abcd_incl$interview_age) <- "Age (Months)"
+table1::label(abcd_incl$sex) <- "Sex"
+table1::label(abcd_incl$income_base_f) <- "Family Income"
+table1::label(abcd_incl$race5) <- "Race"
+table1::label(abcd_incl$puberty) <- "Puberty"
+table1::label(abcd_incl$cbcl_scr_syn_internal_t) <- "Internalizing"
+table1::label(abcd_incl$neighb_phenx_ss_mean_p) <- "Neighborhood Safety Mean"
+table1::label(abcd$reshist_addr1_adi_wsum) <- "ADI"
+table1::label(abcd_incl$crpbi_acceptance_ss_studycaregiver) <- "Parental Acceptance"
+
+
+table1::table1(~interview_age + sex + income_base_f + race5 + puberty + cbcl_scr_syn_internal_t + neighb_phenx_ss_mean_p + reshist_addr1_adi_wsum + crpbi_acceptance_ss_studycaregiver | as.factor(exclude)*event_name, data = abcd_incl)
+```
+### Missing data analyses p-value/effect size
+
+```{r message=FALSE, warning=FALSE}
+# Effect size function, cohens D
+cohens_d <- function(mean_1, mean_2, sd_1, sd_2){
+  pooled_sd<- sqrt((sd_1^2+sd_2^2)/2)
+  d <- (mean_1 - mean_2)/pooled_sd
+  print(paste("cohens d = ",d))
+  }
+```
+
+### overall sample differences
+```{r message=FALSE, warning=FALSE}
+# Overall sample
+# age
+t.test(abcd$interview_age[abcd$event_name=="Baseline"] ~ abcd$exclude[abcd$event_name=="Baseline"])
+age <- abcd %>% 
+  filter(event_name=="Baseline") %>% 
+  group_by(exclude) %>% 
+  summarise(M_age = mean(interview_age, na.rm = T), SD_age = sd(interview_age, na.rm = T))
+
+cohens_d(age$M_[1], age$M[2],
+         age$SD[1],age$SD[2])
+
+# baseline income
+t.test(abcd$income_base_r[abcd$event_name=="Baseline"] ~ abcd$exclude[abcd$event_name=="Baseline"])
+
+income <- abcd %>% 
+  filter(event_name=="Baseline") %>% 
+  group_by(exclude) %>% 
+  summarise(M = mean(income_base_r, na.rm = T), SD = sd(income_base_r, na.rm = T))
+
+cohens_d(income$M[1], income$M[2],
+         income$SD[1],income$SD[2])
+
+# Race
+library(descr)
+CrossTable(abcd$race5[abcd$event_name=="Baseline"], abcd$exclude[abcd$event_name=="Baseline"], chisq = TRUE)
+  #chi-square effect sizes Ф = sqrt(chi-square/coun in all cells) ==
+sqrt(22.15/11881)
+
+
+# gender
+CrossTable(abcd$sex[abcd$event_name=="Baseline"], abcd$exclude[abcd$event_name=="Baseline"], chisq = TRUE)
+  #chi-square effect sizes Ф = sqrt(chi-square/coun in all cells) ==
+sqrt(380.4872/11881)
+
+
+# baseline puberty
+t.test(abcd$puberty[abcd$event_name=="Baseline"] ~ abcd$exclude[abcd$event_name=="Baseline"])
+
+puberty <- abcd %>% 
+  filter(event_name=="Baseline") %>% 
+  group_by(exclude) %>% 
+  summarise(M = mean(puberty, na.rm = T), SD = sd(puberty, na.rm = T))
+
+cohens_d(puberty$M[1], puberty$M[2],
+         puberty$SD[1],puberty$SD[2])
+
+# baseline internalizing
+t.test(abcd$cbcl_scr_syn_internal_t[abcd$event_name=="Baseline"] ~ abcd$exclude[abcd$event_name=="Baseline"])
+
+cbcl <- abcd %>% 
+  filter(event_name=="Baseline") %>% 
+  group_by(exclude) %>% 
+  summarise(M = mean(cbcl_scr_syn_internal_t, na.rm = T), SD = sd(cbcl_scr_syn_internal_t, na.rm = T))
+
+
+cohens_d(cbcl$M[1], cbcl$M[2],
+         cbcl$SD[1],cbcl$SD[2])
+
+# baseline Neighb SAFE
+t.test(abcd$neighb_phenx_ss_mean_p[abcd$event_name=="Baseline"] ~ abcd$exclude[abcd$event_name=="Baseline"])
+
+Neigh_safe <- abcd %>% 
+  filter(event_name=="Baseline") %>% 
+  group_by(exclude) %>% 
+  summarise(M = mean(neighb_phenx_ss_mean_p, na.rm = T), SD = sd(neighb_phenx_ss_mean_p, na.rm = T))
+
+
+cohens_d(Neigh_safe$M[1], Neigh_safe$M[2],
+         Neigh_safe$SD[1],Neigh_safe$SD[2])
+
+
+# baseline ADI
+t.test(abcd$reshist_addr1_adi_wsum[abcd$event_name=="Baseline"] ~ abcd$exclude[abcd$event_name=="Baseline"])
+
+ADI <- abcd %>% 
+  filter(event_name=="Baseline") %>% 
+  group_by(exclude) %>% 
+  summarise(M = mean(reshist_addr1_adi_wsum, na.rm = T), SD = sd(reshist_addr1_adi_wsum, na.rm = T))
+
+
+cohens_d(ADI$M[1], ADI$M[2],
+         ADI$SD[1],ADI$SD[2])
+
+# baseline Acceptance
+t.test(abcd$crpbi_acceptance_ss_studycaregiver[abcd$event_name=="Baseline"] ~ abcd$exclude[abcd$event_name=="Baseline"])
+
+par_accept <- abcd %>% 
+  filter(event_name=="Baseline") %>% 
+  group_by(exclude) %>% 
+  summarise(M = mean(crpbi_acceptance_ss_studycaregiver, na.rm = T), SD = sd(crpbi_acceptance_ss_studycaregiver, na.rm = T))
+
+
+cohens_d(par_accept$M[1], par_accept$M[2],
+         par_accept$SD[1],par_accept$SD[2])
+
+
+
+# DIFFERENCE Puberty-by-gender 
+t.test(abcd_incl$puberty[abcd_incl$event_name=="Baseline"] ~ abcd_incl$sex[abcd_incl$event_name=="Baseline"])
+
+pubert_sex <- abcd_incl %>% 
+  filter(event_name=="Baseline") %>% 
+  group_by(sex) %>% 
+  summarise(M = mean(puberty, na.rm = T), SD = sd(puberty, na.rm = T))
+
+
+cohens_d(pubert_sex$M[1], pubert_sex$M[2],
+         pubert_sex$SD[1],pubert_sex$SD[2])
+
+
+# baseline income
+t.test(abcd$income_base_r[abcd$event_name=="Baseline"] ~ abcd$exclude[abcd$event_name=="Baseline"])
+
+income <- abcd %>% 
+  filter(event_name=="Baseline") %>% 
+  group_by(exclude) %>% 
+  summarise(M = mean(income_base_r, na.rm = T), SD = sd(income_base_r, na.rm = T))
+
+cohens_d(income$M[1], income$M[2],
+         income$SD[1],income$SD[2])
+
+# year 1 CBCL diff by sex
+t.test(abcd_incl$cbcl_scr_syn_internal_t[abcd_incl$event_name=="Year 1"] ~ abcd_incl$sex_r[abcd_incl$event_name=="Year 1"])
+
+CBCL_sex <- abcd_incl %>%
+  filter(event_name == "Year 1") %>% 
+  group_by(sex_r) %>% 
+  summarise(M_cbcl = mean(cbcl_scr_syn_internal_t, na.rm = T), SD_cbcl = sd(cbcl_scr_syn_internal_t, na.rm = T))
+CBCL_sex
+
+cohens_d(CBCL_sex$M_cbcl[1], CBCL_sex$M_cbcl[2],
+         CBCL_sex$SD_cbcl[1],CBCL_sex$SD_cbcl[2])
+```
+
+
+To interpret easily latent factor in SEM
+
+## Correl (pearsons r)
+
+### Recoding/renaming
+
+recoding for ease of interpretation in correlations, SEM (loading factors all pos/neg), and shortening names
+
+```{r message=FALSE, warning=FALSE}
+set.seed(200)
+## Creating numeric ID: 
+abcd_incl$IDs <- as.numeric(as.factor(abcd_incl$subj_id))
+
+# shortening names
+abcd_mplus <- abcd_incl %>% 
+  rename(ID = IDs,
+         Event = event_name,
+         Age = interview_age,
+         Sex_M1F0 = sex_r,
+         Race = ethnicity,
+         Inc_BL = income_base_r,
+         Puberty = puberty,
+         ADI = reshist_addr1_adi_wsum,CBCL_t = cbcl_scr_syn_internal_t,
+         Neigh_safe = neighb_phenx_ss_mean_p,
+         Par_Accept = crpbi_acceptance_ss_studycaregiver,
+         L_Amyg = Left_amyg_nback, 
+         R_Amyg = Right_amyg_nback,
+         Family = rel_family_id,
+         ABCDsite = site) 
+
+```
+
+### Recoding baseline income/SR parental safety
+
+New baseline income `income_base_recoded`
+new reverse coded: `neighb_phenx_ss_mean_p_recode`
+```{r message=FALSE, warning=FALSE}
+library(car)
+abcd_mplus = abcd_mplus %>% 
+  mutate(Inc_BL_r = -1*Inc_BL + 11)
+
+abcd_mplus = abcd_mplus  %>% 
+  mutate(Neigh_safe_r = -1*Neigh_safe + 5)
+
+
+```
+
+### table/plot 
+```{r message=FALSE, warning=FALSE}
+abcd_base = abcd_mplus %>% 
+  filter(Event == "Baseline")
+
+correl = data.frame(Age = abcd_base$Age, 
+                    Sex = abcd_base$Sex_M1F0, 
+                    Puberty = abcd_base$Puberty, 
+                    Income = abcd_base$Inc_BL_r, 
+                    ADI = abcd_base$ADI, 
+                    "Neigh Safe" = abcd_base$Neigh_safe_r, 
+                    Accept = abcd_base$Par_Accept, 
+                    "CBCL_t" = abcd_base$CBCL_t, 
+                    "L Amyg" = abcd_base$L_Amyg, 
+                    "R Amyg" = abcd_base$R_Amyg,
+                    "Bilat Amyg" = abcd_base$Bilat_Amyg,
+                    "Nback FD" = abcd_base$nback_meanFD_motion
+                    )
+
+cor_table = cor(correl, use = "pairwise", method = "pearson")
+
+library(kableExtra) # for table formatting
+knitr::kable(cor_table, digits = 2) %>% 
+  kable_styling(full_width = T)
+
+
+library(corrplot)
+corrplot(cor_table, type = "upper", 
+         method = "pie", #title = "Pairwise Pearson r among variables", 
+         tl.cex = 0.7, tl.col = 'black',
+         mar=c(1, 1, 1, 1))
+
+# write.csv(cor_table, "~/Downloads/correlation_vars.csv")
+
+```
+
+
+# Prep/Export: Mplus 
+
+# Prep/Export: Mplus 
+
+## Wide form, Var select
+```{r message=FALSE, warning=FALSE}
+
+# BL and Y1 rather than 1 and 2 so that it was clear when it was combined with the variable names 
+Mplus_data = abcd_mplus %>% 
+  mutate(Event_short = if_else(Event == "Baseline", "BL", "Y1")) 
+
+# dummy code scan variable
+Mplus_data = Mplus_data %>% 
+  mutate(Scan1 = if_else(scanner_type == 1, 1, 0), 
+         Scan2 = if_else(scanner_type == 2, 1, 0))
+
+vars = c("Age","Event","Sex_M1F0","Race","Inc_BL","Puberty","ADI","CBCL_t",
+         "Neigh_safe","Par_Accept","L_Amyg","R_Amyg","Bilat_Amyg",
+         "Family", "Inc_BL_r","Neigh_safe_r",
+         "scanner_type","Scan1","Scan2","ABCDsite")
+# wide format
+Mplus_data_wide <- as.data.frame(pivot_wider(data = Mplus_data,
+                               id_cols = ID,
+                               names_from = Event_short,
+                               names_sep = "_",
+                               values_from = vars )
+                                )
+                                 
+
+
+```
+
+## Marking NA values
+Replacing `NA` with `99999` 
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=TRUE}
+
+# Removing non-existent columns (e.g. L_Amyg_Y1) and cleaning up variable names
+all_na <- function(x) any(!is.na(x))
+
+Mplus_data_wide = Mplus_data_wide %>% 
+  select_if(all_na) %>% 
+  rename(Inc_BL = Inc_BL_BL,
+         Inc_BL_r = Inc_BL_r_BL,
+         Family = Family_BL)
+
+
+Mplus_data_wide[Mplus_data_wide=='NULL'] <- 99999  
+Mplus_data_wide[is.na(Mplus_data_wide)] = 99999
+```
+
+## Saving `.dat` file
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=TRUE}
+library(multiplex)
+library(MplusAutomation)
+
+Mplus_wide_final <- Mplus_data_wide %>% 
+  filter(Event_BL =="Baseline") %>% 
+  select(-Event_BL, -Event_Y1)
+
+
+
+write.dat(Mplus_wide_final, "~/Desktop/UM/4_ABCD/3_Projects/1_Cortex_sub/Stage2/data/Cortex_Mplus_2020_12_09_WIDE.dat")
+colnames(Mplus_wide_final)
+
+```
+

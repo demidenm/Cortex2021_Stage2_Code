@@ -1,0 +1,426 @@
+Mplus VERSION 7.31 (Mac)
+MUTHEN & MUTHEN
+12/10/2020   3:54 PM
+
+INPUT INSTRUCTIONS
+
+   TITLE: SEM Model for Ecological Risk
+   DATA: FILE = Mplus_wide_final.dat;
+   VARIABLE:
+   NAMES =
+   IDs
+   Age_Y1
+   Age_BL
+  Sex_M1F0_Y1
+  Sex_M1F0_BL
+  Race_Y1
+  Race_BL
+  Inc_BL
+  Puberty_Y1
+  Puberty_BL
+  ADI_Y1
+  ADI_BL
+  CBCL_t_Y1
+  CBCL_t_BL
+  Neigh_safe_Y1
+  Neigh_safe_BL
+  Par_Accept_Y1
+  Par_Accept_BL
+   L_Amyg_BL
+   R_Amyg_BL
+   Bilat_Amyg_BL
+   Family
+   Inc_BL_r
+   Neigh_safe_r_Y1
+   Neigh_safe_r_BL
+   scanner_type_BL
+   Scan1_BL
+   Scan2_BL
+   ABCDsite_Y1
+   ABCDsite_BL
+   ;
+
+  MISSING ARE ALL (99999);
+
+
+  USEVARIABLES =  Inc_BL_r
+  Neigh_safe_r_BL
+  Race_BL
+  Puberty_BL
+  CBCL_t_Y1
+  Age_BL
+  ADI_BL
+   Scan1_BL
+   Scan2_BL
+  Bilat_amyg_BL
+  ;
+
+  !cluster = Family;
+
+  ANALYSIS:
+  Type = Random ;
+
+  MODEL:
+
+  ER By Inc_BL_r*
+  Neigh_safe_r_BL
+  ADI_BL;
+  ER@1;
+
+  ER on
+   Race_BL
+   Puberty_BL
+   Age_BL;
+
+    ERXamy | ER XWITH Bilat_amyg_BL;
+
+  CBCL_t_Y1 on ER ERXamy Bilat_amyg_BL
+   Race_BL
+   Puberty_BL
+   Age_BL
+    Scan1_BL
+   Scan2_BL;
+
+   Bilat_amyg_BL on !ER
+   !ERXParent !Par_Accept_BL
+   !Sex_M1F2_BL
+   Race_BL
+   Puberty_BL
+   Age_BL
+    Scan1_BL
+   Scan2_BL;
+
+
+
+  !marital_index with income;
+  !marital_index with maritalagg;
+
+
+  MODEL INDIRECT:
+
+  !ATOD IND RiskIndex_rr;
+  !Drug_lifetime IND parenting;
+  !Drug_lifetime IND EC2;
+
+
+  OUTPUT:	MODINDICES SAMPSTAT STANDARDIZED;
+
+
+
+*** WARNING in VARIABLE command
+  Note that only the first 8 characters of variable names are used in the output.
+  Shorten variable names to avoid any confusion.
+*** WARNING in OUTPUT command
+  STANDARDIZED (STD, STDY, STDYX) options are not available for TYPE=RANDOM.
+  Request for STANDARDIZED (STD, STDY, STDYX) is ignored.
+*** WARNING
+  Data set contains cases with missing on x-variables.
+  These cases were not included in the analysis.
+  Number of cases with missing on x-variables:  366
+   3 WARNING(S) FOUND IN THE INPUT INSTRUCTIONS
+
+
+
+SEM Model for Ecological Risk
+
+SUMMARY OF ANALYSIS
+
+Number of groups                                                 1
+Number of observations                                        7019
+
+Number of dependent variables                                    5
+Number of independent variables                                  5
+Number of continuous latent variables                            2
+
+Observed dependent variables
+
+  Continuous
+   INC_BL_R    NEIGH_SAFE  CBCL_T_Y1   ADI_BL      BILAT_AMYG
+
+Observed independent variables
+   RACE_BL     PUBERTY_    AGE_BL      SCAN1_BL    SCAN2_BL
+
+Continuous latent variables
+   ER          ERXAMY
+
+
+Estimator                                                      MLR
+Information matrix                                        OBSERVED
+Maximum number of iterations                                   100
+Convergence criterion                                    0.100D-05
+Maximum number of EM iterations                                500
+Convergence criteria for the EM algorithm
+  Loglikelihood change                                   0.100D-02
+  Relative loglikelihood change                          0.100D-05
+  Derivative                                             0.100D-03
+Minimum variance                                         0.100D-03
+Maximum number of steepest descent iterations                   20
+Maximum number of iterations for H1                           2000
+Convergence criterion for H1                             0.100D-03
+Optimization algorithm                                         EMA
+
+Input data file(s)
+  Mplus_wide_final.dat
+Input data format  FREE
+
+
+SUMMARY OF DATA
+
+     Number of missing data patterns            11
+
+
+COVARIANCE COVERAGE OF DATA
+
+Minimum covariance coverage value   0.100
+
+
+     PROPORTION OF DATA PRESENT
+
+
+           Covariance Coverage
+              INC_BL_R      NEIGH_SA      CBCL_T_Y      ADI_BL        BILAT_AM
+              ________      ________      ________      ________      ________
+ INC_BL_R       0.932
+ NEIGH_SA       0.929         0.996
+ CBCL_T_Y       0.893         0.951         0.955
+ ADI_BL         0.882         0.941         0.904         0.945
+ BILAT_AM       0.932         0.996         0.955         0.945         1.000
+ RACE_BL        0.932         0.996         0.955         0.945         1.000
+ PUBERTY_       0.932         0.996         0.955         0.945         1.000
+ AGE_BL         0.932         0.996         0.955         0.945         1.000
+ SCAN1_BL       0.932         0.996         0.955         0.945         1.000
+ SCAN2_BL       0.932         0.996         0.955         0.945         1.000
+
+
+           Covariance Coverage
+              RACE_BL       PUBERTY_      AGE_BL        SCAN1_BL      SCAN2_BL
+              ________      ________      ________      ________      ________
+ RACE_BL        1.000
+ PUBERTY_       1.000         1.000
+ AGE_BL         1.000         1.000         1.000
+ SCAN1_BL       1.000         1.000         1.000         1.000
+ SCAN2_BL       1.000         1.000         1.000         1.000         1.000
+
+
+SAMPLE STATISTICS
+
+
+     ESTIMATED SAMPLE STATISTICS
+
+
+           Means
+              INC_BL_R      NEIGH_SA      CBCL_T_Y      ADI_BL        BILAT_AM
+              ________      ________      ________      ________      ________
+ 1              3.423         1.036        48.501        91.137         0.194
+
+
+           Means
+              RACE_BL       PUBERTY_      AGE_BL        SCAN1_BL      SCAN2_BL
+              ________      ________      ________      ________      ________
+ 1              1.956         1.734       119.615         0.639         0.234
+
+
+           Covariances
+              INC_BL_R      NEIGH_SA      CBCL_T_Y      ADI_BL        BILAT_AM
+              ________      ________      ________      ________      ________
+ INC_BL_R       4.702
+ NEIGH_SA       0.702         0.854
+ CBCL_T_Y       1.311         1.004       108.468
+ ADI_BL        19.145         4.350        12.549       602.881
+ BILAT_AM       0.004         0.002         0.024        -0.001         0.096
+ RACE_BL        0.647         0.167         0.114         0.823         0.005
+ PUBERTY_       0.364         0.096         0.151         1.799        -0.003
+ AGE_BL        -0.184        -0.139         0.368        -3.550        -0.008
+ SCAN1_BL      -0.008        -0.010        -0.036         0.939         0.005
+ SCAN2_BL       0.027         0.016         0.185        -0.334        -0.007
+
+
+           Covariances
+              RACE_BL       PUBERTY_      AGE_BL        SCAN1_BL      SCAN2_BL
+              ________      ________      ________      ________      ________
+ RACE_BL        1.788
+ PUBERTY_       0.134         0.738
+ AGE_BL        -0.050         1.249        56.532
+ SCAN1_BL      -0.069         0.002         0.179         0.231
+ SCAN2_BL       0.077        -0.001        -0.162        -0.150         0.179
+
+
+           Correlations
+              INC_BL_R      NEIGH_SA      CBCL_T_Y      ADI_BL        BILAT_AM
+              ________      ________      ________      ________      ________
+ INC_BL_R       1.000
+ NEIGH_SA       0.350         1.000
+ CBCL_T_Y       0.058         0.104         1.000
+ ADI_BL         0.360         0.192         0.049         1.000
+ BILAT_AM       0.006         0.008         0.007         0.000         1.000
+ RACE_BL        0.223         0.135         0.008         0.025         0.012
+ PUBERTY_       0.196         0.121         0.017         0.085        -0.010
+ AGE_BL        -0.011        -0.020         0.005        -0.019        -0.004
+ SCAN1_BL      -0.008        -0.022        -0.007         0.080         0.033
+ SCAN2_BL       0.029         0.040         0.042        -0.032        -0.054
+
+
+           Correlations
+              RACE_BL       PUBERTY_      AGE_BL        SCAN1_BL      SCAN2_BL
+              ________      ________      ________      ________      ________
+ RACE_BL        1.000
+ PUBERTY_       0.117         1.000
+ AGE_BL        -0.005         0.193         1.000
+ SCAN1_BL      -0.107         0.006         0.050         1.000
+ SCAN2_BL       0.136        -0.002        -0.051        -0.736         1.000
+
+
+     MAXIMUM LOG-LIKELIHOOD VALUE FOR THE UNRESTRICTED (H1) MODEL IS -130741.358
+
+
+UNIVARIATE SAMPLE STATISTICS
+
+
+     UNIVARIATE HIGHER-ORDER MOMENT DESCRIPTIVE STATISTICS
+
+         Variable/         Mean/     Skewness/   Minimum/ % with                Percentiles
+        Sample Size      Variance    Kurtosis    Maximum  Min/Max      20%/60%    40%/80%    Median
+
+     INC_BL_R              3.400       1.260       1.000   12.91%       2.000      2.000      3.000
+            6545.000       4.675       1.047      10.000    2.05%       3.000      5.000
+     NEIGH_SAFE_R_BL       1.036       0.943       0.000   22.35%       0.000      0.667      1.000
+            6994.000       0.854       0.589       4.000    1.37%       1.000      1.667
+     CBCL_T_Y1            48.483       0.385      33.000    7.43%      39.000     45.000     48.000
+            6700.000     108.451      -0.440      87.000    0.01%      50.000     58.000
+     ADI_BL               91.160      -1.979       0.000    2.08%      80.790     93.160     96.930
+            6631.000     601.992       4.328     125.750    0.02%     100.550    108.180
+     BILAT_AMYG_BL         0.194       0.352      -3.016    0.01%       0.004      0.140      0.193
+            7019.000       0.096      13.326       4.636    0.01%       0.247      0.386
+     RACE_BL               1.956       1.170       1.000   58.56%       1.000      1.000      1.000
+            7019.000       1.788       0.111       5.000   10.30%       2.000      3.000
+     PUBERTY_BL            1.734       0.695       1.000   52.13%       1.000      1.000      1.000
+            7019.000       0.738      -0.850       5.000    0.06%       2.000      3.000
+     AGE_BL              119.615      -0.049     107.000    0.87%     111.000    117.000    120.000
+            7019.000      56.532      -1.274     132.000    1.23%     122.000    128.000
+     SCAN1_BL              0.639      -0.581       0.000   36.06%       0.000      1.000      1.000
+            7019.000       0.231      -1.663       1.000   63.94%       1.000      1.000
+     SCAN2_BL              0.234       1.256       0.000   76.59%       0.000      0.000      0.000
+            7019.000       0.179      -0.422       1.000   23.41%       0.000      1.000
+
+
+THE MODEL ESTIMATION TERMINATED NORMALLY
+
+
+
+MODEL FIT INFORMATION
+
+Number of Free Parameters                       29
+
+Loglikelihood
+
+          H0 Value                      -80080.627
+          H0 Scaling Correction Factor      1.3999
+            for MLR
+
+Information Criteria
+
+          Akaike (AIC)                  160219.255
+          Bayesian (BIC)                160418.089
+          Sample-Size Adjusted BIC      160325.934
+            (n* = (n + 2) / 24)
+
+
+
+MODEL RESULTS
+
+                                                    Two-Tailed
+                    Estimate       S.E.  Est./S.E.    P-Value
+
+ ER       BY
+    INC_BL_R           1.698      0.049     34.635      0.000
+    NEIGH_SAFE         0.377      0.016     23.990      0.000
+    ADI_BL             9.777      0.342     28.553      0.000
+
+ ER         ON
+    RACE_BL            0.181      0.012     14.983      0.000
+    PUBERTY_BL         0.275      0.020     13.924      0.000
+    AGE_BL            -0.009      0.002     -4.411      0.000
+
+ CBCL_T_Y1  ON
+    ER                 0.872      0.201      4.336      0.000
+    ERXAMY             0.309      0.505      0.613      0.540
+
+ CBCL_T_Y1  ON
+    BILAT_AMYG         0.389      0.456      0.855      0.393
+    RACE_BL           -0.161      0.102     -1.587      0.113
+    PUBERTY_BL        -0.058      0.162     -0.360      0.719
+    AGE_BL             0.012      0.017      0.712      0.476
+    SCAN1_BL           1.046      0.372      2.813      0.005
+    SCAN2_BL           1.933      0.429      4.505      0.000
+
+ BILAT_AMYG ON
+    RACE_BL            0.005      0.003      1.707      0.088
+    PUBERTY_BL        -0.004      0.004     -0.953      0.340
+    AGE_BL             0.000      0.000     -0.322      0.747
+    SCAN1_BL          -0.009      0.013     -0.742      0.458
+    SCAN2_BL          -0.049      0.015     -3.213      0.001
+
+ Intercepts
+    INC_BL_R           3.768      0.390      9.665      0.000
+    NEIGH_SAFE         1.113      0.087     12.740      0.000
+    CBCL_T_Y1         46.446      2.049     22.669      0.000
+    ADI_BL            93.180      2.270     41.044      0.000
+    BILAT_AMYG         0.229      0.059      3.862      0.000
+
+ Residual Variances
+    INC_BL_R           1.457      0.161      9.054      0.000
+    NEIGH_SAFE         0.694      0.016     42.181      0.000
+    CBCL_T_Y1        107.219      1.625     65.983      0.000
+    ADI_BL           494.954     17.307     28.598      0.000
+    BILAT_AMYG         0.095      0.004     21.197      0.000
+    ER                 1.000      0.000    999.000    999.000
+
+
+QUALITY OF NUMERICAL RESULTS
+
+     Condition Number for the Information Matrix              0.928E-06
+       (ratio of smallest to largest eigenvalue)
+
+
+MODEL MODIFICATION INDICES
+
+NOTE:  Modification indices for direct effects of observed dependent variables
+regressed on covariates may not be included.  To include these, request
+MODINDICES (ALL).
+
+Minimum M.I. value for printing the modification index    10.000
+
+                                   M.I.     E.P.C.
+
+
+ON/BY Statements
+
+BILAT_AM ON ERXAMY   /
+ERXAMY   BY BILAT_AM             999.000     0.000
+
+ON Statements
+
+BILAT_AM ON CBCL_T_Y             999.000     0.000
+
+WITH Statements
+
+NEIGH_SA WITH INC_BL_R          1292.246   -11.896
+ADI_BL   WITH INC_BL_R           999.000     0.000
+
+
+     Beginning Time:  15:54:00
+        Ending Time:  15:54:28
+       Elapsed Time:  00:00:28
+
+
+
+MUTHEN & MUTHEN
+3463 Stoner Ave.
+Los Angeles, CA  90066
+
+Tel: (310) 391-9971
+Fax: (310) 391-8971
+Web: www.StatModel.com
+Support: Support@StatModel.com
+
+Copyright (c) 1998-2015 Muthen & Muthen

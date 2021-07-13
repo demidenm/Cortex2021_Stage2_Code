@@ -1,0 +1,693 @@
+Mplus VERSION 7.31 (Mac)
+MUTHEN & MUTHEN
+12/10/2020   3:20 PM
+
+INPUT INSTRUCTIONS
+
+   TITLE: SEM Model for Ecological Risk
+   DATA: FILE = Mplus_wide_final_SENSITIVITY.dat;
+   VARIABLE:
+   NAMES =
+  IDs
+  Age_BL
+  Age_Y1
+  Sex_M1F0_BL
+  Sex_M1F0_Y1
+  Race_BL
+  Race_Y1
+  Inc_BL
+  Puberty_BL
+  Puberty_Y1
+  ADI_BL
+  ADI_Y1
+  CBCL_t_BL
+  CBCL_t_Y1
+  Neigh_safe_BL
+  Neigh_safe_Y1
+  Par_Accept_BL
+  Par_Accept_Y1
+   L_Amyg_BL
+   R_Amyg_BL
+   Bilat_Amyg_BL
+   Family
+   Inc_BL_r
+   Neigh_safe_r_BL
+   Neigh_safe_r_Y1
+   scanner_type_BL
+   Scan1_BL
+   Scan2_BL
+   ABCDsite_BL
+   ABCDsite_Y1
+   ;
+
+  MISSING ARE ALL (99999);
+
+  !Categorical =  scanner; Only for dependent variable
+
+  !USEOBSERVATIONS ARE Event_r EQ 1 ;
+
+  USEVARIABLES =  Inc_BL_r
+  Neigh_safe_r_BL
+  Race_BL
+  Puberty_BL
+  CBCL_t_Y1
+  !scanner
+  Age_BL
+  ADI_BL
+  L_Amyg_BL
+  Scan1_BL
+   Scan2_BL
+  Par_Accept_BL
+  ;
+
+  cluster = family;
+
+  stratification= ABCDsite_BL;
+
+  DEFINE:
+
+  ANALYSIS:
+  !TYPE = TWOLEVEL COMPLEX;
+  TYPE = COMPLEX;
+
+  MODEL:
+
+  ER By Inc_BL_r*
+  Neigh_safe_r_BL
+  ADI_BL;
+  ER@1;
+
+  ER on
+   Race_BL
+   Puberty_BL
+   Age_BL
+   Scan1_BL
+   Scan2_BL;
+
+  CBCL_t_Y1 on ER L_Amyg_BL
+   Race_BL
+   Puberty_BL
+   Age_BL
+   Par_Accept_BL
+   Scan1_BL
+   Scan2_BL;
+
+   L_Amyg_BL on ER
+   Race_BL
+   Puberty_BL
+   Age_BL
+   Par_Accept_BL
+   Scan1_BL
+   Scan2_BL;
+
+
+  MODEL INDIRECT:
+
+
+  OUTPUT:	MODINDICES SAMPSTAT STANDARDIZED;
+
+
+
+*** WARNING in VARIABLE command
+  Note that only the first 8 characters of variable names are used in the output.
+  Shorten variable names to avoid any confusion.
+*** WARNING
+  Clusters with the same IDs have been found in different strata.  These
+  clusters are assumed to be different because clusters are not allowed
+  to appear in more than one stratum.
+*** WARNING
+  Data set contains cases with missing on x-variables.
+  These cases were not included in the analysis.
+  Number of cases with missing on x-variables:  300
+   3 WARNING(S) FOUND IN THE INPUT INSTRUCTIONS
+
+
+
+SEM Model for Ecological Risk
+
+SUMMARY OF ANALYSIS
+
+Number of groups                                                 1
+Number of observations                                        5507
+
+Number of dependent variables                                    5
+Number of independent variables                                  6
+Number of continuous latent variables                            1
+
+Observed dependent variables
+
+  Continuous
+   INC_BL_R    NEIGH_SAFE  CBCL_T_Y1   ADI_BL      L_AMYG_BL
+
+Observed independent variables
+   RACE_BL     PUBERTY_    AGE_BL      SCAN1_BL    SCAN2_BL    PAR_ACCE
+
+Continuous latent variables
+   ER
+
+Variables with special functions
+
+  Stratification        ABCDSITE
+  Cluster variable      FAMILY
+
+Estimator                                                      MLR
+Information matrix                                        OBSERVED
+Maximum number of iterations                                  1000
+Convergence criterion                                    0.500D-04
+Maximum number of steepest descent iterations                   20
+Maximum number of iterations for H1                           2000
+Convergence criterion for H1                             0.100D-03
+
+Input data file(s)
+  Mplus_wide_final_SENSITIVITY.dat
+
+Input data format  FREE
+
+
+SUMMARY OF DATA
+
+     Number of missing data patterns            10
+     Number of strata                      22
+     Number of clusters                  4995
+
+
+COVARIANCE COVERAGE OF DATA
+
+Minimum covariance coverage value   0.100
+
+
+     PROPORTION OF DATA PRESENT
+
+
+           Covariance Coverage
+              INC_BL_R      NEIGH_SA      CBCL_T_Y      ADI_BL        L_AMYG_B
+              ________      ________      ________      ________      ________
+ INC_BL_R       0.933
+ NEIGH_SA       0.929         0.996
+ CBCL_T_Y       0.894         0.952         0.956
+ ADI_BL         0.884         0.943         0.908         0.946
+ L_AMYG_B       0.933         0.996         0.956         0.946         1.000
+ RACE_BL        0.933         0.996         0.956         0.946         1.000
+ PUBERTY_       0.933         0.996         0.956         0.946         1.000
+ AGE_BL         0.933         0.996         0.956         0.946         1.000
+ SCAN1_BL       0.933         0.996         0.956         0.946         1.000
+ SCAN2_BL       0.933         0.996         0.956         0.946         1.000
+ PAR_ACCE       0.933         0.996         0.956         0.946         1.000
+
+
+           Covariance Coverage
+              RACE_BL       PUBERTY_      AGE_BL        SCAN1_BL      SCAN2_BL
+              ________      ________      ________      ________      ________
+ RACE_BL        1.000
+ PUBERTY_       1.000         1.000
+ AGE_BL         1.000         1.000         1.000
+ SCAN1_BL       1.000         1.000         1.000         1.000
+ SCAN2_BL       1.000         1.000         1.000         1.000         1.000
+ PAR_ACCE       1.000         1.000         1.000         1.000         1.000
+
+
+           Covariance Coverage
+              PAR_ACCE
+              ________
+ PAR_ACCE       1.000
+
+
+SAMPLE STATISTICS
+
+
+     ESTIMATED SAMPLE STATISTICS
+
+
+           Means
+              INC_BL_R      NEIGH_SA      CBCL_T_Y      ADI_BL        L_AMYG_B
+              ________      ________      ________      ________      ________
+      1         3.390         1.027        48.559        91.404         0.180
+
+
+           Means
+              RACE_BL       PUBERTY_      AGE_BL        SCAN1_BL      SCAN2_BL
+              ________      ________      ________      ________      ________
+      1         1.927         1.728       119.701         0.651         0.226
+
+
+           Means
+              PAR_ACCE
+              ________
+      1         2.792
+
+
+           Covariances
+              INC_BL_R      NEIGH_SA      CBCL_T_Y      ADI_BL        L_AMYG_B
+              ________      ________      ________      ________      ________
+ INC_BL_R       4.566
+ NEIGH_SA       0.678         0.851
+ CBCL_T_Y       1.443         1.109       108.065
+ ADI_BL        18.262         4.424        14.734       587.592
+ L_AMYG_B       0.006         0.004         0.008        -0.016         0.107
+ RACE_BL        0.654         0.153         0.178         0.542         0.009
+ PUBERTY_       0.358         0.094         0.140         1.596        -0.002
+ AGE_BL        -0.258        -0.181         0.840        -4.229        -0.011
+ SCAN1_BL       0.002        -0.009         0.035         0.873         0.002
+ SCAN2_BL       0.019         0.016         0.122        -0.270        -0.003
+ PAR_ACCE      -0.033        -0.008        -0.126        -0.347         0.000
+
+
+           Covariances
+              RACE_BL       PUBERTY_      AGE_BL        SCAN1_BL      SCAN2_BL
+              ________      ________      ________      ________      ________
+ RACE_BL        1.795
+ PUBERTY_       0.134         0.740
+ AGE_BL        -0.048         1.247        56.654
+ SCAN1_BL      -0.069        -0.002         0.174         0.227
+ SCAN2_BL       0.073         0.003        -0.160        -0.147         0.175
+ PAR_ACCE      -0.011        -0.003         0.026         0.000        -0.001
+
+
+           Covariances
+              PAR_ACCE
+              ________
+ PAR_ACCE       0.084
+
+
+           Correlations
+              INC_BL_R      NEIGH_SA      CBCL_T_Y      ADI_BL        L_AMYG_B
+              ________      ________      ________      ________      ________
+ INC_BL_R       1.000
+ NEIGH_SA       0.344         1.000
+ CBCL_T_Y       0.065         0.116         1.000
+ ADI_BL         0.353         0.198         0.058         1.000
+ L_AMYG_B       0.008         0.013         0.002        -0.002         1.000
+ RACE_BL        0.228         0.123         0.013         0.017         0.020
+ PUBERTY_       0.195         0.119         0.016         0.077        -0.008
+ AGE_BL        -0.016        -0.026         0.011        -0.023        -0.004
+ SCAN1_BL       0.002        -0.021         0.007         0.076         0.015
+ SCAN2_BL       0.021         0.042         0.028        -0.027        -0.024
+ PAR_ACCE      -0.053        -0.031        -0.042        -0.049         0.004
+
+
+           Correlations
+              RACE_BL       PUBERTY_      AGE_BL        SCAN1_BL      SCAN2_BL
+              ________      ________      ________      ________      ________
+ RACE_BL        1.000
+ PUBERTY_       0.116         1.000
+ AGE_BL        -0.005         0.193         1.000
+ SCAN1_BL      -0.108        -0.004         0.048         1.000
+ SCAN2_BL       0.131         0.007        -0.051        -0.739         1.000
+ PAR_ACCE      -0.028        -0.014         0.012         0.003        -0.010
+
+
+           Correlations
+              PAR_ACCE
+              ________
+ PAR_ACCE       1.000
+
+
+     MAXIMUM LOG-LIKELIHOOD VALUE FOR THE UNRESTRICTED (H1) MODEL IS -103700.991
+
+
+UNIVARIATE SAMPLE STATISTICS
+
+
+     UNIVARIATE HIGHER-ORDER MOMENT DESCRIPTIVE STATISTICS
+
+         Variable/         Mean/     Skewness/   Minimum/ % with                Percentiles
+        Sample Size      Variance    Kurtosis    Maximum  Min/Max      20%/60%    40%/80%    Median
+
+     INC_BL_R              3.368       1.290       1.000   12.75%       2.000      2.000      3.000
+            5138.000       4.538       1.173      10.000    1.91%       3.000      5.000
+     NEIGH_SAFE_R_BL       1.027       0.957       0.000   22.58%       0.000      0.667      1.000
+            5487.000       0.851       0.633       4.000    1.40%       1.000      1.667
+     CBCL_T_Y1            48.539       0.372      33.000    7.28%      39.000     45.000     48.000
+            5263.000     108.041      -0.446      87.000    0.02%      50.000     58.000
+     ADI_BL               91.417      -2.010       0.000    1.94%      81.100     93.660     97.020
+            5212.000     586.417       4.519     125.750    0.02%     100.530    108.140
+     L_AMYG_BL             0.180       0.527      -2.805    0.02%      -0.015      0.122      0.178
+            5507.000       0.107      13.738       4.564    0.02%       0.236      0.377
+     RACE_BL               1.927       1.224       1.000   60.31%       1.000      1.000      1.000
+            5507.000       1.795       0.209       5.000   10.37%       1.000      3.000
+     PUBERTY_BL            1.728       0.711       1.000   52.66%       1.000      1.000      1.000
+            5507.000       0.740      -0.841       5.000    0.04%       2.000      3.000
+     AGE_BL              119.701      -0.066     107.000    0.84%     111.000    117.000    120.000
+            5507.000      56.654      -1.276     132.000    1.23%     123.000    128.000
+     SCAN1_BL              0.651      -0.634       0.000   34.90%       0.000      1.000      1.000
+            5507.000       0.227      -1.599       1.000   65.10%       1.000      1.000
+     SCAN2_BL              0.226       1.308       0.000   77.37%       0.000      0.000      0.000
+            5507.000       0.175      -0.288       1.000   22.63%       0.000      1.000
+     PAR_ACCEPT_BL         2.792      -1.893       1.000    0.09%       2.600      2.800      3.000
+            5507.000       0.084       4.517       3.000   50.39%       3.000      3.000
+
+
+THE MODEL ESTIMATION TERMINATED NORMALLY
+
+
+
+MODEL FIT INFORMATION
+
+Number of Free Parameters                       33
+
+Loglikelihood
+
+          H0 Value                      -63062.228
+          H0 Scaling Correction Factor      1.3848
+            for MLR
+          H1 Value                      -62979.375
+          H1 Scaling Correction Factor      1.2645
+            for MLR
+
+Information Criteria
+
+          Akaike (AIC)                  126190.457
+          Bayesian (BIC)                126408.711
+          Sample-Size Adjusted BIC      126303.847
+            (n* = (n + 2) / 24)
+
+Chi-Square Test of Model Fit
+
+          Value                            160.717*
+          Degrees of Freedom                    17
+          P-Value                           0.0000
+          Scaling Correction Factor         1.0311
+            for MLR
+
+*   The chi-square value for MLM, MLMV, MLR, ULSMV, WLSM and WLSMV cannot be used
+    for chi-square difference testing in the regular way.  MLM, MLR and WLSM
+    chi-square difference testing is described on the Mplus website.  MLMV, WLSMV,
+    and ULSMV difference testing is done using the DIFFTEST option.
+
+RMSEA (Root Mean Square Error Of Approximation)
+
+          Estimate                           0.039
+          90 Percent C.I.                    0.034  0.045
+          Probability RMSEA <= .05           0.999
+
+CFI/TLI
+
+          CFI                                0.919
+          TLI                                0.809
+
+Chi-Square Test of Model Fit for the Baseline Model
+
+          Value                           1813.376
+          Degrees of Freedom                    40
+          P-Value                           0.0000
+
+SRMR (Standardized Root Mean Square Residual)
+
+          Value                              0.019
+
+
+
+MODEL RESULTS
+
+                                                    Two-Tailed
+                    Estimate       S.E.  Est./S.E.    P-Value
+
+ ER       BY
+    INC_BL_R           1.644      0.058     28.371      0.000
+    NEIGH_SAFE         0.375      0.019     20.132      0.000
+    ADI_BL             9.595      0.404     23.721      0.000
+
+ ER       ON
+    RACE_BL            0.186      0.015     12.759      0.000
+    PUBERTY_BL         0.276      0.023     11.839      0.000
+    AGE_BL            -0.010      0.002     -4.356      0.000
+    SCAN1_BL           0.170      0.054      3.158      0.002
+    SCAN2_BL           0.115      0.061      1.900      0.057
+
+ CBCL_T_Y ON
+    ER                 1.053      0.209      5.040      0.000
+
+ L_AMYG_B ON
+    ER                 0.002      0.005      0.443      0.657
+
+ CBCL_T_Y ON
+    L_AMYG_BL          0.080      0.440      0.181      0.856
+    RACE_BL           -0.136      0.118     -1.156      0.248
+    PUBERTY_BL        -0.142      0.186     -0.765      0.444
+    AGE_BL             0.024      0.020      1.195      0.232
+    PAR_ACCEPT        -1.304      0.527     -2.475      0.013
+    SCAN1_BL           1.157      0.437      2.645      0.008
+    SCAN2_BL           1.682      0.502      3.350      0.001
+
+ L_AMYG_B ON
+    RACE_BL            0.006      0.004      1.529      0.126
+    PUBERTY_BL        -0.004      0.006     -0.760      0.447
+    AGE_BL             0.000      0.001     -0.237      0.813
+    PAR_ACCEPT         0.005      0.015      0.331      0.741
+    SCAN1_BL          -0.004      0.015     -0.248      0.804
+    SCAN2_BL          -0.025      0.019     -1.329      0.184
+
+ Intercepts
+    INC_BL_R           3.746      0.439      8.532      0.000
+    NEIGH_SAFE         1.109      0.101     10.989      0.000
+    CBCL_T_Y1         48.975      2.747     17.830      0.000
+    ADI_BL            93.532      2.591     36.103      0.000
+    L_AMYG_BL          0.189      0.080      2.363      0.018
+
+ Residual Variances
+    INC_BL_R           1.507      0.189      7.951      0.000
+    NEIGH_SAFE         0.691      0.020     35.274      0.000
+    CBCL_T_Y1        106.460      1.858     57.296      0.000
+    ADI_BL           483.021     19.088     25.305      0.000
+    L_AMYG_BL          0.107      0.006     18.701      0.000
+    ER                 1.000      0.000    999.000    999.000
+
+
+STANDARDIZED MODEL RESULTS
+
+
+STDYX Standardization
+
+                                                    Two-Tailed
+                    Estimate       S.E.  Est./S.E.    P-Value
+
+ ER       BY
+    INC_BL_R           0.819      0.025     32.557      0.000
+    NEIGH_SAFE         0.433      0.020     21.146      0.000
+    ADI_BL             0.421      0.017     24.806      0.000
+
+ ER       ON
+    RACE_BL            0.234      0.018     13.341      0.000
+    PUBERTY_BL         0.223      0.018     12.396      0.000
+    AGE_BL            -0.070      0.016     -4.382      0.000
+    SCAN1_BL           0.076      0.024      3.167      0.002
+    SCAN2_BL           0.045      0.024      1.902      0.057
+
+ CBCL_T_Y ON
+    ER                 0.108      0.021      5.058      0.000
+
+ L_AMYG_B ON
+    ER                 0.008      0.018      0.444      0.657
+
+ CBCL_T_Y ON
+    L_AMYG_BL          0.003      0.014      0.181      0.856
+    RACE_BL           -0.018      0.015     -1.156      0.248
+    PUBERTY_BL        -0.012      0.015     -0.765      0.444
+    AGE_BL             0.017      0.014      1.195      0.232
+    PAR_ACCEPT        -0.036      0.015     -2.476      0.013
+    SCAN1_BL           0.053      0.020      2.648      0.008
+    SCAN2_BL           0.068      0.020      3.356      0.001
+
+ L_AMYG_B ON
+    RACE_BL            0.023      0.015      1.517      0.129
+    PUBERTY_BL        -0.011      0.015     -0.761      0.447
+    AGE_BL            -0.003      0.014     -0.236      0.813
+    PAR_ACCEPT         0.004      0.013      0.331      0.740
+    SCAN1_BL          -0.005      0.022     -0.248      0.804
+    SCAN2_BL          -0.032      0.024     -1.321      0.187
+
+ Intercepts
+    INC_BL_R           1.753      0.205      8.536      0.000
+    NEIGH_SAFE         1.203      0.110     10.975      0.000
+    CBCL_T_Y1          4.712      0.266     17.698      0.000
+    ADI_BL             3.860      0.130     29.752      0.000
+    L_AMYG_BL          0.576      0.247      2.336      0.019
+
+ Residual Variances
+    INC_BL_R           0.330      0.041      8.015      0.000
+    NEIGH_SAFE         0.813      0.018     45.830      0.000
+    CBCL_T_Y1          0.985      0.004    226.787      0.000
+    ADI_BL             0.822      0.014     57.457      0.000
+    L_AMYG_BL          0.999      0.001    869.378      0.000
+    ER                 0.883      0.011     77.630      0.000
+
+
+STDY Standardization
+
+                                                    Two-Tailed
+                    Estimate       S.E.  Est./S.E.    P-Value
+
+ ER       BY
+    INC_BL_R           0.819      0.025     32.557      0.000
+    NEIGH_SAFE         0.433      0.020     21.146      0.000
+    ADI_BL             0.421      0.017     24.806      0.000
+
+ ER       ON
+    RACE_BL            0.175      0.013     13.465      0.000
+    PUBERTY_BL         0.259      0.021     12.443      0.000
+    AGE_BL            -0.009      0.002     -4.384      0.000
+    SCAN1_BL           0.160      0.051      3.167      0.002
+    SCAN2_BL           0.108      0.057      1.902      0.057
+
+ CBCL_T_Y ON
+    ER                 0.108      0.021      5.058      0.000
+
+ L_AMYG_B ON
+    ER                 0.008      0.018      0.444      0.657
+
+ CBCL_T_Y ON
+    L_AMYG_BL          0.003      0.014      0.181      0.856
+    RACE_BL           -0.013      0.011     -1.156      0.248
+    PUBERTY_BL        -0.014      0.018     -0.765      0.444
+    AGE_BL             0.002      0.002      1.195      0.232
+    PAR_ACCEPT        -0.125      0.051     -2.478      0.013
+    SCAN1_BL           0.111      0.042      2.648      0.008
+    SCAN2_BL           0.162      0.048      3.356      0.001
+
+ L_AMYG_B ON
+    RACE_BL            0.017      0.011      1.517      0.129
+    PUBERTY_BL        -0.013      0.017     -0.761      0.447
+    AGE_BL             0.000      0.002     -0.236      0.813
+    PAR_ACCEPT         0.015      0.045      0.331      0.740
+    SCAN1_BL          -0.011      0.046     -0.248      0.804
+    SCAN2_BL          -0.076      0.057     -1.321      0.187
+
+ Intercepts
+    INC_BL_R           1.753      0.205      8.536      0.000
+    NEIGH_SAFE         1.203      0.110     10.975      0.000
+    CBCL_T_Y1          4.712      0.266     17.698      0.000
+    ADI_BL             3.860      0.130     29.752      0.000
+    L_AMYG_BL          0.576      0.247      2.336      0.019
+
+ Residual Variances
+    INC_BL_R           0.330      0.041      8.015      0.000
+    NEIGH_SAFE         0.813      0.018     45.830      0.000
+    CBCL_T_Y1          0.985      0.004    226.787      0.000
+    ADI_BL             0.822      0.014     57.457      0.000
+    L_AMYG_BL          0.999      0.001    869.378      0.000
+    ER                 0.883      0.011     77.630      0.000
+
+
+STD Standardization
+
+                                                    Two-Tailed
+                    Estimate       S.E.  Est./S.E.    P-Value
+
+ ER       BY
+    INC_BL_R           1.749      0.059     29.504      0.000
+    NEIGH_SAFE         0.399      0.020     19.869      0.000
+    ADI_BL            10.211      0.425     24.026      0.000
+
+ ER       ON
+    RACE_BL            0.175      0.013     13.465      0.000
+    PUBERTY_BL         0.259      0.021     12.443      0.000
+    AGE_BL            -0.009      0.002     -4.384      0.000
+    SCAN1_BL           0.160      0.051      3.167      0.002
+    SCAN2_BL           0.108      0.057      1.902      0.057
+
+ CBCL_T_Y ON
+    ER                 1.121      0.223      5.027      0.000
+
+ L_AMYG_B ON
+    ER                 0.003      0.006      0.443      0.657
+
+ CBCL_T_Y ON
+    L_AMYG_BL          0.080      0.440      0.181      0.856
+    RACE_BL           -0.136      0.118     -1.156      0.248
+    PUBERTY_BL        -0.142      0.186     -0.765      0.444
+    AGE_BL             0.024      0.020      1.195      0.232
+    PAR_ACCEPT        -1.304      0.527     -2.475      0.013
+    SCAN1_BL           1.157      0.437      2.645      0.008
+    SCAN2_BL           1.682      0.502      3.350      0.001
+
+ L_AMYG_B ON
+    RACE_BL            0.006      0.004      1.529      0.126
+    PUBERTY_BL        -0.004      0.006     -0.760      0.447
+    AGE_BL             0.000      0.001     -0.237      0.813
+    PAR_ACCEPT         0.005      0.015      0.331      0.741
+    SCAN1_BL          -0.004      0.015     -0.248      0.804
+    SCAN2_BL          -0.025      0.019     -1.329      0.184
+
+ Intercepts
+    INC_BL_R           3.746      0.439      8.532      0.000
+    NEIGH_SAFE         1.109      0.101     10.989      0.000
+    CBCL_T_Y1         48.975      2.747     17.830      0.000
+    ADI_BL            93.532      2.591     36.103      0.000
+    L_AMYG_BL          0.189      0.080      2.363      0.018
+
+ Residual Variances
+    INC_BL_R           1.507      0.189      7.951      0.000
+    NEIGH_SAFE         0.691      0.020     35.274      0.000
+    CBCL_T_Y1        106.460      1.858     57.296      0.000
+    ADI_BL           483.021     19.088     25.305      0.000
+    L_AMYG_BL          0.107      0.006     18.701      0.000
+    ER                 0.883      0.011     77.630      0.000
+
+
+R-SQUARE
+
+    Observed                                        Two-Tailed
+    Variable        Estimate       S.E.  Est./S.E.    P-Value
+
+    INC_BL_R           0.670      0.041     16.279      0.000
+    NEIGH_SA           0.187      0.018     10.573      0.000
+    CBCL_T_Y           0.015      0.004      3.342      0.001
+    ADI_BL             0.178      0.014     12.403      0.000
+    L_AMYG_B           0.001      0.001      1.171      0.241
+
+     Latent                                         Two-Tailed
+    Variable        Estimate       S.E.  Est./S.E.    P-Value
+
+    ER                 0.117      0.011     10.295      0.000
+
+
+QUALITY OF NUMERICAL RESULTS
+
+     Condition Number for the Information Matrix              0.341E-08
+       (ratio of smallest to largest eigenvalue)
+
+
+MODEL MODIFICATION INDICES
+
+NOTE:  Modification indices for direct effects of observed dependent variables
+regressed on covariates may not be included.  To include these, request
+MODINDICES (ALL).
+
+Minimum M.I. value for printing the modification index    10.000
+
+                                   M.I.     E.P.C.  Std E.P.C.  StdYX E.P.C.
+
+ON Statements
+
+ER       ON CBCL_T_Y              14.550     0.170      0.160        1.661
+ER       ON L_AMYG_B              14.523   -45.438    -42.695      -13.963
+ER       ON PAR_ACCE              14.527    -0.221     -0.208       -0.060
+
+WITH Statements
+
+NEIGH_SA WITH INC_BL_R            36.979    -0.415     -0.415       -0.407
+ADI_BL   WITH INC_BL_R            16.239     6.825      6.825        0.253
+RACE_BL  WITH ER                  14.521    -3.403     -3.403       -2.540
+PUBERTY_ WITH ER                  14.519    -4.047     -4.047       -4.706
+AGE_BL   WITH ER                  14.516    33.571     33.571        4.460
+SCAN1_BL WITH ER                  14.551    -2.977     -2.977       -6.246
+SCAN2_BL WITH ER                  14.541    -1.962     -1.962       -4.689
+PAR_ACCE WITH ER                  14.528    -0.019     -0.019       -0.064
+
+
+     Beginning Time:  15:20:57
+        Ending Time:  15:20:57
+       Elapsed Time:  00:00:00
+
+
+
+MUTHEN & MUTHEN
+3463 Stoner Ave.
+Los Angeles, CA  90066
+
+Tel: (310) 391-9971
+Fax: (310) 391-8971
+Web: www.StatModel.com
+Support: Support@StatModel.com
+
+Copyright (c) 1998-2015 Muthen & Muthen
